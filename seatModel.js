@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const SeatSchema = new mongoose.Schema({
+  seatNumber:{type:Number},
   reserved: {type: Boolean}
 });
 

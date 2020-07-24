@@ -9,46 +9,80 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(express.static(__dirname + '/public'));
 
-
-app.get('/freeSeat',(req,res) => {
-    Seat.updateMany({reserved: false})
-    .then((seat) => console.log(seat), res.status(200).send({message:"All Seat Are Vacant"}))
-    .catch((err) => res.status(400).send({message: err}));
-})
-
-app.get('/status',(req,res) => {
-    Seat.find().then((seat) => res.status(200).send({data:seat}))
-    .catch((err) => res.status(400).send({message: err}));
-})
-
-app.get('/setup',(req,res) => {
+app.get('/allSeats',(req,res) => {
     Seat.find((err,data) => {
-        console.log(data.length);
         if(err)
         {
-            res.status(400).send({message: err});
-        }
-        else if(data.length >= 80)
-        {
-            res.status(200).send({data:data});
+            res.status(400).send({data:err})
         }
         else
         {
+            res.status(200).send({data:data})
+        }
+    });
+})
+
+app.get('/feeAll',(req,res) => {
+    Seat.find().updateMany({reserved:false}).then((data) => res.status(200).send({message:"free"}));
+})
+
+app.get('/bookrandom',(req,res) => {
+    let seatNumber = getRandomNumber();
+    Seat.find({seatNumber}).update({reserved:true}).then((data) => res.status(200).send({message:"booked"}));
+})
+
+app.post('/bookseat',(req,res) => {
+    let seats = parseInt(req.body.seats);
+    let totalAvailableSeats = 0;
+    Seat.find({reserved: false}).then((data) => 
+    {
+        totalAvailableSeats = data.length;
+        if(seats > totalAvailableSeats)
+        {
+            res.status(200).send({message:"Seats are Not Available"});
+        }
+        else
+        {
+           bookSeats(seats,data);     
+        }
+    });
+})
+
+
+function bookSeats(seats,bookSeats)
+{
+
+}
+
+function getRandomNumber(){
+    min = 1;
+    max = 80;
+    return Math.ceil(Math.random() * (max - min) + min);
+}
+
+function setup() {
+    Seat.find((err,data) => {
+        if(err)
+        {
+            console.log(err);
+        }
+        else if(data.length == 0)
+        {
             for(let i=0; i < 80;i++)
             {
-                let seat = new Seat({reserved: false});
+                let seat = new Seat({seatNumber:i,reserved: false});
                 seat.save();
             }
-            res.status(200).send({data:"done"});
         }
     })
-})
+}
 
 const mongoose = require('mongoose');
 const Seat = require('./seatModel.js').Seat;
 const DB_URI = 'mongodb://localhost:27017/booking';
 
 mongoose.connect(DB_URI).then(() => {
+    setup();
   console.log('Listening on port: ' + PORT);
   app.listen(PORT);
 });
