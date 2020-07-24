@@ -1,14 +1,15 @@
 const express = require('express');
-const path = require('path');
 const bodyParser = require('body-parser');
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;  // setup the port 
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
-app.use(express.static(__dirname + '/public'));
+app.use(bodyParser.json()) //parsing the json output for application
+app.use(express.static(__dirname + '/public'));// to host static pages
 
+
+//to get all the seats from system
 app.get('/allSeats',(req,res) => {
     Seat.find((err,data) => {
         if(err)
@@ -16,21 +17,25 @@ app.get('/allSeats',(req,res) => {
             res.status(400).send({data:err})
         }
         else
-        {
+        {   
+            data = data.sort((a,b) => a.seatNumber-b.seatNumber);
             res.status(200).send({data:data})
         }
-    }).sort({seatNumber: 1});
+    });
 })
 
+//to get all the available seats from the system
 app.get('/feeAll',(req,res) => {
     Seat.find().updateMany({reserved:false}).then((data) => res.status(200).send({message:"free"}));
 })
 
+//book a random seat in system
 app.get('/bookrandom',(req,res) => {
     let seatNumber = getRandomNumber();
     Seat.find({seatNumber}).update({reserved:true}).then((data) => res.status(200).send({message:"booked"}));
 })
 
+//book the seats
 app.post('/bookseat',(req,res) => {
     let seats = parseInt(req.body.seats);
     let totalAvailableSeats = 0;
@@ -49,20 +54,19 @@ app.post('/bookseat',(req,res) => {
     });
 })
 
-
+//save the seat in the system
 function bookSeats(seats,availableSeatsForBook)
 {
-    let selected = [];
     let i = 0;
-    let b = availableSeatsForBook.map(a => a.seatNumber);
+    let selected = availableSeatsForBook.map(s => s.seatNumber);
     while(i < seats)
     {
-        let a = {id : i,seatNumber : b[i]};
-        updateDatabase(a);
+        updateDatabase({id : i,seatNumber : selected[i]});
         i++;
     }
 }
 
+//update the database for selected seats
 function updateDatabase(selected)
 {
     Seat.findOne({seatNumber:selected.seatNumber}).update({reserved: true}).then((a) => {
@@ -70,12 +74,14 @@ function updateDatabase(selected)
     });
 }
 
+// to get a random number to range between 1-80
 function getRandomNumber(){
     min = 1;
     max = 80;
     return Math.ceil(Math.random() * (max - min) + min);
 }
 
+// to setup the basic setup for database with 80 seats
 function setup() {
     Seat.find((err,data) => {
         if(err)
@@ -95,10 +101,19 @@ function setup() {
 
 const mongoose = require('mongoose');
 const Seat = require('./seatModel.js').Seat;
-const DB_URI = 'mongodb://localhost:27017/booking';
+const DB_URI = 'mongodb://mongo:27018/booking';
+//docker based mongo connection 
 
-mongoose.connect(DB_URI).then(() => {
-    setup();
-  console.log('Listening on port: ' + PORT);
-  app.listen(PORT);
+mongoose.connect(DB_URI).then((v) =>{
+    app.listen(PORT, (e)=> {
+        if(e) {
+            throw new Error('Internal Server Error');
+        }else
+        {
+            console.log(PORT);
+        }
+        setup();
+    });
+}).catch(e =>{
+    console.log('err',e);
 });

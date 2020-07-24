@@ -9,20 +9,36 @@ $(document).ready(async function(){
         const td = document.createElement("td");
         td.textContent = j[0][i].id;
         td.style.backgroundColor = j[0][i].reserved ? "Red" : "Green";
-        td.style.width = "50px"
-        td.style.height = "50px" 
+        td.style.width = "150px"
+        td.style.height = "50px"
+        td.style.border = "1px solid black";
         td.title = j[0][i].seatNumber
         tr.appendChild(td);
         tbl.appendChild(tr);
     }
     document.getElementById("bookSeat").addEventListener('click',(e) => {
         var seats = prompt("Enter Seats You want to reserve ?");
-        $.post('/bookseat',{seats: seats});
+        $.post('/bookseat',{seats: seats},(data,status) => {
+            if(data)
+            {
+                window.location.reload();
+            }
+        });
     });
     document.getElementById("bookSeatRandom").addEventListener('click',(e) => {
-        $.get('/bookrandom');
+        $.get('/bookrandom',(data,status) => {
+            if(data)
+            {
+                window.location.reload();
+            }
+        });
     })
     document.getElementById("freeSeat").addEventListener('click',(e) => {
-        $.get('/feeAll');
+        $.get('/feeAll',(data,status) => {
+            if(data)
+            {
+                window.location.reload();
+            }
+        });
     })
   });

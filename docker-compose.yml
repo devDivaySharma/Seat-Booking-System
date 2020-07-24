@@ -1,14 +1,18 @@
 version: '3'
 services:
-  web:
-    image: "docker-node-mongo-todo-app"
+  api:
+    image: seat-booking
     build: .
-    command: "node server.js"
+    restart: always
     ports:
-      - "5000:5000"
+      - "3000:3000"    
     depends_on:
-      - "mongo"
+      - "mongo"  
   mongo:
     image: "mongo"
-    ports:
+    restart: always
+    ports: 
       - "27018:27017"
+    command: mongod --port 27018
+    volumes: 
+      - ./data:/data/db
