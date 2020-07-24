@@ -19,7 +19,7 @@ app.get('/allSeats',(req,res) => {
         {
             res.status(200).send({data:data})
         }
-    });
+    }).sort({seatNumber: 1});
 })
 
 app.get('/feeAll',(req,res) => {
@@ -34,7 +34,7 @@ app.get('/bookrandom',(req,res) => {
 app.post('/bookseat',(req,res) => {
     let seats = parseInt(req.body.seats);
     let totalAvailableSeats = 0;
-    Seat.find({reserved: false}).then((data) => 
+    Seat.find({reserved: false}).sort({seatNumber: 1}).then((data) => 
     {
         totalAvailableSeats = data.length;
         if(seats > totalAvailableSeats)
@@ -43,15 +43,31 @@ app.post('/bookseat',(req,res) => {
         }
         else
         {
-           bookSeats(seats,data);     
+           bookSeats(seats,data);
+           res.status(200).send({message:"Seats are Booked"});
         }
     });
 })
 
 
-function bookSeats(seats,bookSeats)
+function bookSeats(seats,availableSeatsForBook)
 {
+    let selected = [];
+    let i = 0;
+    let b = availableSeatsForBook.map(a => a.seatNumber);
+    while(i < seats)
+    {
+        let a = {id : i,seatNumber : b[i]};
+        updateDatabase(a);
+        i++;
+    }
+}
 
+function updateDatabase(selected)
+{
+    Seat.findOne({seatNumber:selected.seatNumber}).update({reserved: true}).then((a) => {
+        console.log(a);
+    });
 }
 
 function getRandomNumber(){
@@ -68,7 +84,7 @@ function setup() {
         }
         else if(data.length == 0)
         {
-            for(let i=0; i < 80;i++)
+            for(let i=1; i <= 80;i++)
             {
                 let seat = new Seat({seatNumber:i,reserved: false});
                 seat.save();
