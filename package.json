@@ -1,5 +1,5 @@
 {
-  "name": "Seat Booking System",
+  "name": "seat_booking_system",
   "version": "1.0.0",
   "description": "This is seat booking system",
   "main": "server.js",
